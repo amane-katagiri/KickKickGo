@@ -1,0 +1,4 @@
+{
+    "address": "localhost:6379",
+    "key": "push_count"
+}

@@ -1,0 +1,11 @@
+{
+    "server": {
+        "key": "",
+        "cert": "",
+        "host": "localhost",
+        "port": 8000,
+        "ws_path": "/ws"
+    },
+    "static_dir": "static",
+    "template_files": ["templates/index.tmpl"]
+}

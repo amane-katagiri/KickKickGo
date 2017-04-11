@@ -1,0 +1,109 @@
+{{define "index"}}<!DOCTYPE html>
+<html>
+<head>
+<title>EXAMPLE</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.4/vue.min.js"></script>
+<style type="text/css">
+body {
+    font-size: xx-large;
+    user-select: none;
+}
+</style>
+</head>
+<body>
+<div id="button">
+    <span id="count">{{ "{{" }} digits {{ "}}" }}</span> clicks by <span id="clients">{{ "{{" }} digits {{ "}}" }}</span> clients
+</div>
+<div>
+    you are in <span id="soundMode" v-on:click="toggleMode"><template v-if="verbose === true">verbose</template><template v-else>quiet</template></span> mode
+</div>
+
+<script type="text/javascript">
+    let count = new Vue({el: "#count", data: {digits: "******"}});
+    let clients = new Vue({el: "#clients", data: {digits: "*"}});
+    let soundMode = new Vue({el: "#soundMode", data: {verbose: true},
+                                               methods: {toggleMode: function () {this.verbose = !this.verbose;}}});
+
+    function Ws() {
+        let instance = this;
+        Ws = function Ws() {
+            return instance;
+        }
+        Ws.prototype = this;
+        instance = new Ws();
+        instance.constructor = Ws;
+
+        instance.socket = null;
+
+        instance.getSocketState = function() {
+            if (this.socket !== null) {
+                return this.socket.readyState;
+            } else {
+                return null;
+            }
+        }.bind(instance);
+
+        instance.ping = function() {
+            if (this.getSocketState() === 1) {
+                this.socket.send("ping");
+                this.fire();
+                return;
+            } else if (this.getSocketState() !== 0) {
+                this.connect();
+            }
+        }.bind(instance);
+
+        instance.reconnectTimeout = undefined;
+        instance.reconnectInterval = 250;
+        instance.connect = function() {
+            let socket_state = this.getSocketState();
+            if (this.getSocketState() === 0 || this.getSocketState() === 1) {
+                return;
+            }
+            clearTimeout(this.reconnectTimeout);
+            this.socket = new WebSocket({{.WsUrl}});
+            this.socket.onmessage = function(e) {
+                let j = JSON.parse(e.data);
+                count.digits = j.count;
+                clients.digits = j.clients;
+                if (j.message === "ping") {
+                    this.fire();
+                }
+            }.bind(this);
+            this.socket.onclose = function() {
+                clients.digits = "*";
+                this.reconnectInterval *= 2;
+                this.reconnectTimeout = setTimeout(this.connect, this.reconnectInterval * (Math.random() + 0.5));
+            }.bind(this);
+            this.socket.onopen = function() {
+                this.reconnectInterval = 250;
+            }.bind(this);
+        }.bind(instance);
+
+        instance.fire = function() {
+            if (soundMode.verbose === true) {
+                console.log("played sound")
+            }
+            if (soundMode.verbose === true && ("vibrate" in window.navigator) === true) {
+                window.navigator.vibrate(100);
+                console.log("vibrated")
+            }
+        };
+
+        instance.connect();
+        return instance;
+    }
+
+    // add click events
+    let ws = new Ws();
+    if (("ontouchstart" in window) === null) {
+        document.getElementById("button").addEventListener("touchstart", ws.ping, false);
+    } else {
+        document.getElementById("button").addEventListener("mousedown", ws.ping, false);
+    }
+</script>
+</body>
+</html>{{end}}
