@@ -13,7 +13,9 @@ import (
     "github.com/amane-katagiri/kick-kick-go/websocket"
 )
 
-var wsUrl = "wss?://host/path/to/ws"
+var wsUrl = "wss?://host:port/path/to/ws"
+var origin = "https?://host/path:port"
+var secure = ""
 var tmpl *template.Template
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,11 +36,12 @@ func main() {
     if err != nil {
         panic(err)
     }
-    if config.Server.Key != "" {
-        wsUrl = fmt.Sprintf("wss://%s:%d%s", config.Server.Host, config.Server.Port, config.Server.WsPath)
-    } else {
-        wsUrl = fmt.Sprintf("ws://%s:%d%s", config.Server.Host, config.Server.Port, config.Server.WsPath)
+    if config.WsUrl.Ssl {
+        secure = "s"
     }
+    wsUrl = fmt.Sprintf("ws%s://%s:%d%s", secure, config.WsUrl.Host, config.WsUrl.Port, config.WsUrl.Path)
+    origin = fmt.Sprintf("http%s://%s:%d", secure, config.WsUrl.Host, config.WsUrl.Port)
+    websocket.SetOrigin(origin)
     tmpl, err = template.New("").ParseFiles(config.TemplateFiles...)
     if err != nil {
         log.Println(err)

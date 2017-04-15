@@ -10,6 +10,7 @@ type Config struct {
     Server Server `json:"server"`
     StaticDir string `json:"static_dir"`
     TemplateFiles []string `json:"template_files"`
+    WsUrl WsUrl `json:"ws_url"`
 }
 type Server struct {
     Key string `json:"key"`
@@ -25,6 +26,13 @@ type Flag struct {
     Cert string
     Host string
     Port int
+    WsUrl WsUrl
+}
+type WsUrl struct {
+    Ssl bool `json:ssl`
+    Host string `json:host`
+    Port int `json:port`
+    Path string `json:path`
 }
 var f Flag
 
@@ -38,6 +46,7 @@ func loadDefaultConfig() *Config {
         },
         StaticDir: "static",
         TemplateFiles: []string{"templates/index.tmpl"},
+        WsUrl: WsUrl {Ssl: false, Host: "", Port: -1, Path: ""},
     }
 }
 
@@ -55,6 +64,10 @@ func LoadFlag() {
     flag.StringVar(&f.Cert, "cert", "", "server cert")
     flag.StringVar(&f.Host, "host", "", "hostname")
     flag.IntVar(&f.Port, "port", -1, "port number")
+    flag.BoolVar(&f.WsUrl.Ssl, "wsurl.ssl", false, "set ssl in `WsUrl` (template variable)")
+    flag.StringVar(&f.WsUrl.Host, "wsurl.host", "", "set hostname in `WsUrl` (template variable)")
+    flag.IntVar(&f.WsUrl.Port, "wsurl.port", -1, "set port in `WsUrl` (template variable)")
+    flag.StringVar(&f.WsUrl.Path, "wsurl.path", "", "set path (starts with /) in `WsUrl` (template variable)")
 
     flag.Parse()
 }
@@ -85,5 +98,27 @@ func (self *Config) update() {
     }
     if f.Port != -1 {
         self.Server.Port = f.Port
+    }
+
+    if f.WsUrl.Ssl == true || self.Server.Key != "" {
+        self.WsUrl.Ssl = true
+    }
+
+    if f.WsUrl.Host != "" {
+        self.WsUrl.Host = f.WsUrl.Host
+    } else if self.WsUrl.Host == "" {
+        self.WsUrl.Host = self.Server.Host
+    }
+
+    if f.WsUrl.Port != -1 {
+        self.WsUrl.Port = f.WsUrl.Port
+    } else if self.WsUrl.Port == -1 {
+        self.WsUrl.Port = self.Server.Port
+    }
+
+    if f.WsUrl.Path != "" {
+        self.WsUrl.Path = f.WsUrl.Path
+    } else if self.WsUrl.Path == "" {
+        self.WsUrl.Path = self.Server.WsPath
     }
 }

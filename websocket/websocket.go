@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "log"
     "net/http"
+    "net/url"
     "sync"
 
     ws "github.com/gorilla/websocket"
@@ -15,7 +16,23 @@ type Message struct {
     Clients int `json:"clients"`
 }
 
-var upgrader = ws.Upgrader{}
+var Origin = ""
+func SetOrigin(origin string) {
+    Origin = origin
+}
+var upgrader = ws.Upgrader{
+    CheckOrigin: func(r *http.Request) bool {
+        origin := r.Header.Get("Origin")
+        if len(origin) == 0 {
+            return true
+        }
+        u, err := url.Parse(origin)
+        if err != nil {
+            return false
+        }
+        return (Origin != "" && origin == Origin) || u.Host == r.Host
+    },
+}
 
 var add_count = make(chan int)
 var get_count = make(chan int)
