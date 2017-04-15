@@ -29,10 +29,10 @@ type Flag struct {
     WsUrl WsUrl
 }
 type WsUrl struct {
-    Ssl bool `json:ssl`
-    Host string `json:host`
-    Port int `json:port`
-    Path string `json:path`
+    Ssl bool `json:"ssl"`
+    Host string `json:"host"`
+    Port int `json:"port"`
+    Path string `json:"path"`
 }
 var f Flag
 
