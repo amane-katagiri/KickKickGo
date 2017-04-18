@@ -99,8 +99,21 @@ body {
 
     // add click events
     let ws = new Ws();
-    if (("ontouchstart" in window) === null) {
+    if (window.ontouchstart === null) {
         document.getElementById("button").addEventListener("touchstart", ws.ping, false);
+        document.getElementById("button").addEventListener("contextmenu", e => {
+            e.preventDefault();
+        }, {passive: false, capture: true});
+        document.addEventListener("touchstart", e => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, {passive: false, capture: true});
+        document.addEventListener("touchend", e => {
+            if (e.target.nodeName !== "A") {
+                e.preventDefault();
+            }
+        }, {passive: false, capture: true});
     } else {
         document.getElementById("button").addEventListener("mousedown", ws.ping, false);
     }
