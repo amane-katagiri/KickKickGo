@@ -110,7 +110,7 @@ body {
             }
         }, {passive: false, capture: true});
         document.addEventListener("touchend", e => {
-            if (e.target.nodeName !== "A") {
+            if (e.target.nodeName !== "SPAN") {
                 e.preventDefault();
             }
         }, {passive: false, capture: true});
