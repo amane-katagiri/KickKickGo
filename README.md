@@ -33,7 +33,7 @@ docker run --rm amane/kick-kick-go -h
 
 If you want to use different scheme(use tls or not), host, port or path, set `ws_url` on config.json or use `-wsurl.*`. explicit `ws_url` parameters overwrites Origin.
 
-Example: You can use websocket url `http://localhost.amane.moe:9999/dev/chair` as templates variable when using the following `config.json`.
+Example: You can use websocket url `ws://localhost.amane.moe:9999/dev/chair` as templates variable when using the following `config.json`.
 
 * The Origin will be `http://localhost.amane.moe:9999`.
 
