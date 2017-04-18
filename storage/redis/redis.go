@@ -2,6 +2,7 @@ package redis
 
 import (
     "encoding/json"
+    "errors"
     "flag"
     "io/ioutil"
     "log"
@@ -29,7 +30,7 @@ var f Flag
 
 func loadDefaultConfig() *Config {
     return &Config{
-        Address: "localhost:6379",
+        Address: "",
         Key: "push_count",
         MaxIdle: 3,
         IdleTimeOut: 240,
@@ -104,13 +105,17 @@ func (s RedisStorage) SetCount(i int) {
     }
 }
 
-func NewRedisStorage() *RedisStorage {
-    return &RedisStorage{
-        key: config.Key,
-        pool: redigo.Pool{
-            MaxIdle: config.MaxIdle,
-            IdleTimeout: time.Duration(config.IdleTimeOut) * time.Second,
-            Dial: func () (redigo.Conn, error) { return redigo.Dial("tcp", config.Address) },
-        },
+func NewRedisStorage() (*RedisStorage, error) {
+    if config.Address != "" {
+        return &RedisStorage{
+            key: config.Key,
+            pool: redigo.Pool{
+                MaxIdle: config.MaxIdle,
+                IdleTimeout: time.Duration(config.IdleTimeOut) * time.Second,
+                Dial: func () (redigo.Conn, error) { return redigo.Dial("tcp", config.Address) },
+            },
+        }, nil
+    } else {
+        return nil, errors.New("`Address` for RedisStorage is not specified.")
     }
 }

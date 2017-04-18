@@ -10,6 +10,7 @@ import (
     "github.com/amane-katagiri/kick-kick-go/config"
     "github.com/amane-katagiri/kick-kick-go/storage"
     "github.com/amane-katagiri/kick-kick-go/storage/redis"
+    "github.com/amane-katagiri/kick-kick-go/storage/null"
     "github.com/amane-katagiri/kick-kick-go/websocket"
 )
 
@@ -52,8 +53,13 @@ func main() {
     http.HandleFunc(config.Server.WsPath, websocket.WsHandler)
     http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config.StaticDir))))
 
-    r := redis.NewRedisStorage()
-    go websocket.ServeCount(r.GetCount(), r.SetCount)
+    var s storage.Storage
+    s, err = redis.NewRedisStorage()
+    if err != nil {
+        log.Println(err)
+        s, err = null.NewNullStorage()
+    }
+    go websocket.ServeCount(s.GetCount(), s.SetCount)
     go websocket.ServeClients()
     go websocket.ServeId()
 
