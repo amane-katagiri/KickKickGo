@@ -1,24 +1,54 @@
 {{define "index"}}<!DOCTYPE html>
 <html>
 <head>
-<title>EXAMPLE</title>
+<title>kick!!</title>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.4/vue.min.js"></script>
 <style type="text/css">
 body {
+    margin-top: 10px;
+    margin-left: 20px;
+}
+div {
+    margin-bottom: 10px;
+}
+div.count {
     font-size: xx-large;
-    user-select: none;
+}
+div.group {
+    margin-top: 25px;
+}
+div.notice {
+    font-size: small;
+}
+img.img {
+    display: inline-block;
+    position: relative;
 }
 </style>
 </head>
 <body>
-<div id="button">
-    <span id="count">{{ "{{" }} digits {{ "}}" }}</span> clicks by <span id="clients">{{ "{{" }} digits {{ "}}" }}</span> clients
+<div class="count">
+    <span id="count">{{ "{{" }} digits {{ "}}" }}</span> kicks!!
 </div>
 <div>
-    you are in <span id="soundMode" v-on:click="toggleMode"><template v-if="verbose === true">verbose</template><template v-else>quiet</template></span> mode
+    <a href="https://twitter.com/share" class="twitter-share-button" data-via="amane_katagiri" data-text="kick-kick-go を使っています！">Tweet</a>
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+</div>
+<div>
+    &quot;黙ってろデブ <a href="javascript:void(0);" id="soundMode" v-on:click="toggleMode">--<template v-if="verbose === true">verbose</template><template v-else>quiet</template></a> -n <span id="clients">{{ "{{" }} digits {{ "}}" }}</span>&quot;
+</div>
+<div class="group">
+    <img id="button" class="img" alt="sacrifice_button" src="/static/img/chair.jpg" style="max-width: 100%;">
+</div>
+<div class="group notice">
+<div>You can kick someone on your machine.</div>
+<ul>
+    <li><a href="https://hub.docker.com/r/amane/kick-kick-go/">hub.docker.com:amane/kick-kick-go</a></li>
+    <li><a href="https://github.com/amane-katagiri/kick-kick-go">github.com:amane-katagiri/kick-kick-go</a></li>
+</ul>
 </div>
 
 <script type="text/javascript">
@@ -38,15 +68,15 @@ body {
 
         instance.socket = null;
 
-        instance.getSocketState = function() {
+        instance.getSocketState = () => {
             if (this.socket !== null) {
                 return this.socket.readyState;
             } else {
                 return null;
             }
-        }.bind(instance);
+        };
 
-        instance.ping = function() {
+        instance.ping = () => {
             if (this.getSocketState() === 1) {
                 this.socket.send("ping");
                 this.fire();
@@ -54,42 +84,69 @@ body {
             } else if (this.getSocketState() !== 0) {
                 this.connect();
             }
-        }.bind(instance);
+        };
 
         instance.reconnectTimeout = undefined;
         instance.reconnectInterval = 250;
-        instance.connect = function() {
+        instance.connect = () => {
             let socket_state = this.getSocketState();
             if (this.getSocketState() === 0 || this.getSocketState() === 1) {
                 return;
             }
             clearTimeout(this.reconnectTimeout);
             this.socket = new WebSocket({{.WsUrl}});
-            this.socket.onmessage = function(e) {
+            this.socket.onmessage = e => {
                 let j = JSON.parse(e.data);
                 count.digits = j.count;
                 clients.digits = j.clients;
                 if (j.message === "ping") {
                     this.fire();
                 }
-            }.bind(this);
-            this.socket.onclose = function() {
+            };
+            this.socket.onclose = () => {
                 clients.digits = "*";
                 this.reconnectInterval *= 2;
                 this.reconnectTimeout = setTimeout(this.connect, this.reconnectInterval * (Math.random() + 0.5));
-            }.bind(this);
-            this.socket.onopen = function() {
+            };
+            this.socket.onopen = () => {
                 this.reconnectInterval = 250;
-            }.bind(this);
-        }.bind(instance);
+            };
+        };
 
-        instance.fire = function() {
+        instance.rumbleOption = {x: 16, y: 16, tick: 15, maxCount: 20};
+        instance.rumbleCount = 0;
+        instance.rumbleTimeout = undefined;
+
+        instance.fire = () => {
             if (soundMode.verbose === true) {
                 console.log("played sound")
             }
             if (soundMode.verbose === true && ("vibrate" in window.navigator) === true) {
                 window.navigator.vibrate(100);
-                console.log("vibrated")
+            }
+            clearTimeout(this.rumbleTimeout);
+            this.rumbleCount = 0;
+            let rumble = () => {
+                let chair = document.getElementById("button");
+                let x = this.rumbleOption.x,
+                    y = this.rumbleOption.y,
+                    tick = this.rumbleOption.tick;
+                let rx = Math.floor(Math.random() * (x + 1)) - x / 2;
+                let ry = Math.floor(Math.random() * (y + 1)) - y / 2;
+                rx = (rx === 0 && x !== 0) ? ((Math.random() < 0.5) ? 1 : -1) : rx;
+                ry = (ry === 0 && y !== 0) ? ((Math.random() < 0.5) ? 1 : -1) : ry;
+                if (this.rumbleCount != this.rumbleOption.maxCount) {
+                    ++this.rumbleCount;
+                    chair.style.left = rx + "px";
+                    chair.style.top = ry + "px";
+                    this.rumbleTimeout = setTimeout(rumble, tick);
+                } else {
+                    chair.style.left = 0;
+                    chair.style.top = 0;
+                }
+            };
+            if (!("hasFocus" in document) || document.hasFocus()) {
+                rumble();
             }
         };
 
@@ -110,7 +167,7 @@ body {
             }
         }, {passive: false, capture: true});
         document.addEventListener("touchend", e => {
-            if (e.target.nodeName !== "SPAN") {
+            if (e.target.nodeName !== "A") {
                 e.preventDefault();
             }
         }, {passive: false, capture: true});
