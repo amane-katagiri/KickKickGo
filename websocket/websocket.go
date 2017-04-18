@@ -16,21 +16,21 @@ type Message struct {
     Clients int `json:"clients"`
 }
 
-var Origin = ""
-func SetOrigin(origin string) {
-    Origin = origin
+var origin = ""
+func SetOrigin(org string) {
+    origin = org
 }
 var upgrader = ws.Upgrader{
     CheckOrigin: func(r *http.Request) bool {
-        origin := r.Header.Get("Origin")
-        if len(origin) == 0 {
+        org := r.Header.Get("Origin")
+        if len(org) == 0 {
             return true
         }
-        u, err := url.Parse(origin)
+        u, err := url.Parse(org)
         if err != nil {
             return false
         }
-        return (Origin != "" && origin == Origin) || u.Host == r.Host
+        return (origin != "" && org == origin) || u.Host == r.Host
     },
 }
 

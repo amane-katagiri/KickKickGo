@@ -5,7 +5,6 @@ import (
     "html/template"
     "log"
     "net/http"
-    "runtime"
 
     "github.com/amane-katagiri/kick-kick-go/config"
     "github.com/amane-katagiri/kick-kick-go/storage"
@@ -24,9 +23,6 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    cpus := runtime.NumCPU()
-    runtime.GOMAXPROCS(cpus)
-
     storage.LoadFlag()
     config.LoadFlag()
     err := storage.LoadConfig()
