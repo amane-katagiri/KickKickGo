@@ -35,3 +35,7 @@ install:
 .PHONY: clean
 clean:
 	rm -rf bin/*
+
+.PHONY: docker-build
+docker-build:
+	docker build -t $(DOCKER_IMAGE) .
