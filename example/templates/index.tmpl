@@ -52,16 +52,17 @@ img.img {
 </ul>
 </div>
 
-<script type="text/javascript">
-    let count = new Vue({el: "#count", data: {digits: "******"}});
-    let clients = new Vue({el: "#clients", data: {digits: "*"}});
-    let soundMode = new Vue({el: "#soundMode", data: {verbose: true},
+<script>
+    var count = new Vue({el: "#count", data: {digits: "******"}});
+    var clients = new Vue({el: "#clients", data: {digits: "*"}});
+    var soundMode = new Vue({el: "#soundMode", data: {verbose: true},
                                                methods: {toggleMode: function () {this.verbose = !this.verbose;}}});
 
     ion.sound({sounds: [{name: "kick"}], path: "./static/sound/", preload: true, multiplay: true});
 
     function Ws() {
-        let instance = this;
+        var instance = this;
+        var obj = this;
         Ws = function Ws() {
             return instance;
         }
@@ -71,48 +72,49 @@ img.img {
 
         instance.socket = null;
 
-        instance.getSocketState = () => {
-            if (this.socket !== null) {
-                return this.socket.readyState;
+        instance.getSocketState = function () {
+            if (obj.socket !== null) {
+                return obj.socket.readyState;
             } else {
                 return null;
             }
         };
 
-        instance.ping = () => {
-            if (this.getSocketState() === 1) {
-                this.socket.send("ping");
-                this.fire();
+        instance.ping = function () {
+            if (obj.getSocketState() === 1) {
+                obj.socket.send("ping");
+                obj.fire();
                 return;
-            } else if (this.getSocketState() !== 0) {
-                this.connect();
+            } else if (obj.getSocketState() !== 0) {
+                obj.connect();
             }
         };
 
+        instance.wsurl = "{{ .WsUrl }}";
         instance.reconnectTimeout = undefined;
         instance.reconnectInterval = 250;
-        instance.connect = () => {
-            let socket_state = this.getSocketState();
-            if (this.getSocketState() === 0 || this.getSocketState() === 1) {
+        instance.connect = function () {
+            var socket_state = obj.getSocketState();
+            if (obj.getSocketState() === 0 || obj.getSocketState() === 1) {
                 return;
             }
-            clearTimeout(this.reconnectTimeout);
-            this.socket = new WebSocket({{.WsUrl}});
-            this.socket.onmessage = e => {
-                let j = JSON.parse(e.data);
+            clearTimeout(obj.reconnectTimeout);
+            obj.socket = new WebSocket(obj.wsurl);
+            obj.socket.onmessage = function (e) {
+                var j = JSON.parse(e.data);
                 count.digits = j.count;
                 clients.digits = j.clients;
                 if (j.message === "ping") {
-                    this.fire();
+                    obj.fire();
                 }
             };
-            this.socket.onclose = () => {
+            obj.socket.onclose = function () {
                 clients.digits = "*";
-                this.reconnectInterval *= 2;
-                this.reconnectTimeout = setTimeout(this.connect, this.reconnectInterval * (Math.random() + 0.5));
+                obj.reconnectInterval *= 2;
+                obj.reconnectTimeout = setTimeout(obj.connect, obj.reconnectInterval * (Math.random() + 0.5));
             };
-            this.socket.onopen = () => {
-                this.reconnectInterval = 250;
+            obj.socket.onopen = function () {
+                obj.reconnectInterval = 250;
             };
         };
 
@@ -120,29 +122,29 @@ img.img {
         instance.rumbleCount = 0;
         instance.rumbleTimeout = undefined;
 
-        instance.fire = () => {
+        instance.fire = function () {
             if (soundMode.verbose === true) {
                 ion.sound.play("kick");
             }
             if (soundMode.verbose === true && ("vibrate" in window.navigator) === true) {
                 window.navigator.vibrate(100);
             }
-            clearTimeout(this.rumbleTimeout);
-            this.rumbleCount = 0;
-            let rumble = () => {
-                let chair = document.getElementById("button");
-                let x = this.rumbleOption.x,
-                    y = this.rumbleOption.y,
-                    tick = this.rumbleOption.tick;
-                let rx = Math.floor(Math.random() * (x + 1)) - x / 2;
-                let ry = Math.floor(Math.random() * (y + 1)) - y / 2;
+            clearTimeout(obj.rumbleTimeout);
+            obj.rumbleCount = 0;
+            var rumble = function () {
+                var chair = document.getElementById("button");
+                var x = obj.rumbleOption.x,
+                    y = obj.rumbleOption.y,
+                    tick = obj.rumbleOption.tick;
+                var rx = Math.floor(Math.random() * (x + 1)) - x / 2;
+                var ry = Math.floor(Math.random() * (y + 1)) - y / 2;
                 rx = (rx === 0 && x !== 0) ? ((Math.random() < 0.5) ? 1 : -1) : rx;
                 ry = (ry === 0 && y !== 0) ? ((Math.random() < 0.5) ? 1 : -1) : ry;
-                if (this.rumbleCount != this.rumbleOption.maxCount) {
-                    ++this.rumbleCount;
+                if (obj.rumbleCount != obj.rumbleOption.maxCount) {
+                    ++obj.rumbleCount;
                     chair.style.left = rx + "px";
                     chair.style.top = ry + "px";
-                    this.rumbleTimeout = setTimeout(rumble, tick);
+                    obj.rumbleTimeout = setTimeout(rumble, tick);
                 } else {
                     chair.style.left = 0;
                     chair.style.top = 0;
@@ -158,18 +160,18 @@ img.img {
     }
 
     // add click events
-    let ws = new Ws();
+    var ws = new Ws();
     if (window.ontouchstart === null) {
         document.getElementById("button").addEventListener("touchstart", ws.ping, false);
-        document.getElementById("button").addEventListener("contextmenu", e => {
+        document.getElementById("button").addEventListener("contextmenu", function (e) {
             e.preventDefault();
         }, {passive: false, capture: true});
-        document.addEventListener("touchstart", e => {
+        document.addEventListener("touchstart", function (e) {
             if (e.touches.length > 1) {
                 e.preventDefault();
             }
         }, {passive: false, capture: true});
-        document.addEventListener("touchend", e => {
+        document.addEventListener("touchend", function (e) {
             if (e.target.nodeName !== "A") {
                 e.preventDefault();
             }
