@@ -32,7 +32,7 @@ var upgrader = ws.Upgrader{
 		if err != nil {
 			return false
 		}
-		return (origin != "" && org == origin) || u.Host == r.Host
+		return origin == "" || org == origin || u.Host == r.Host
 	},
 }
 

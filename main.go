@@ -33,12 +33,21 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defaultPort := 80
 	if config.WsUrl.Ssl {
 		secure = "s"
+		defaultPort = 443
 	}
-	wsUrl = fmt.Sprintf("ws%s://%s:%d%s", secure, config.WsUrl.Host, config.WsUrl.Port, config.WsUrl.Path)
-	origin = fmt.Sprintf("http%s://%s:%d", secure, config.WsUrl.Host, config.WsUrl.Port)
-	websocket.SetOrigin(origin)
+	if config.WsUrl.Port != defaultPort {
+		wsUrl = fmt.Sprintf("ws%s://%s:%d%s", secure, config.WsUrl.Host, config.WsUrl.Port, config.WsUrl.Path)
+		origin = fmt.Sprintf("http%s://%s:%d", secure, config.WsUrl.Host, config.WsUrl.Port)
+	} else {
+		wsUrl = fmt.Sprintf("ws%s://%s%s", secure, config.WsUrl.Host, config.WsUrl.Path)
+		origin = fmt.Sprintf("http%s://%s", secure, config.WsUrl.Host,)
+	}
+	if config.Server.CheckOrigin {
+		websocket.SetOrigin(origin)
+	}
 	tmpl, err = template.New("").ParseFiles(config.TemplateFiles...)
 	if err != nil {
 		log.Println(err)

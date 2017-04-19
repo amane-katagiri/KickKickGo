@@ -13,20 +13,22 @@ type Config struct {
 	WsUrl         WsUrl    `json:"ws_url"`
 }
 type Server struct {
-	Key    string `json:"key"`
-	Cert   string `json:"cert"`
-	Host   string `json:"host"`
-	Port   int    `json:"port"`
-	WsPath string `json:"ws_path"`
+	Key	        string `json:"key"`
+	Cert        string `json:"cert"`
+	Host        string `json:"host"`
+	Port        int    `json:"port"`
+	CheckOrigin bool   `json:"check_origin"`
+	WsPath      string `json:"ws_path"`
 }
 
 type Flag struct {
-	ConfigFile string
-	Key        string
-	Cert       string
-	Host       string
-	Port       int
-	WsUrl      WsUrl
+	ConfigFile  string
+	Key         string
+	Cert        string
+	Host        string
+	Port        int
+	CheckOrigin bool
+	WsUrl       WsUrl
 }
 type WsUrl struct {
 	Ssl  bool   `json:"ssl"`
@@ -41,8 +43,9 @@ func loadDefaultConfig() *Config {
 	return &Config{
 		Server: Server{
 			Key: "", Cert: "",
-			Host:   "localhost",
-			Port:   8000,
+			Host: "localhost",
+			Port: 8000,
+			CheckOrigin: false,
 			WsPath: "/ws",
 		},
 		StaticDir:     "static",
@@ -64,6 +67,7 @@ func LoadFlag() {
 	flag.StringVar(&f.Key, "key", "", "server key")
 	flag.StringVar(&f.Cert, "cert", "", "server cert")
 	flag.StringVar(&f.Host, "host", "", "hostname")
+	flag.BoolVar(&f.CheckOrigin, "checkorigin", false, "check origin for websocket")
 	flag.IntVar(&f.Port, "port", -1, "port number")
 	flag.BoolVar(&f.WsUrl.Ssl, "wsurl.ssl", false, "set ssl in `WsUrl` (template variable)")
 	flag.StringVar(&f.WsUrl.Host, "wsurl.host", "", "set hostname in `WsUrl` (template variable)")
@@ -99,6 +103,9 @@ func (self *Config) update() {
 	}
 	if f.Port != -1 {
 		self.Server.Port = f.Port
+	}
+	if f.CheckOrigin == true {
+		self.Server.CheckOrigin = f.CheckOrigin
 	}
 
 	if f.WsUrl.Ssl == true || self.Server.Key != "" {

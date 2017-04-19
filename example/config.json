@@ -4,6 +4,7 @@
         "cert": "",
         "host": "localhost",
         "port": 8000,
+        "check_origin": false,
         "ws_path": "/ws"
     },
     "static_dir": "static",
