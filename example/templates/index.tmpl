@@ -6,6 +6,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.4/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ion-sound/3.0.7/js/ion.sound.min.js"></script>
 <style type="text/css">
 body {
     margin-top: 10px;
@@ -56,6 +57,8 @@ img.img {
     let clients = new Vue({el: "#clients", data: {digits: "*"}});
     let soundMode = new Vue({el: "#soundMode", data: {verbose: true},
                                                methods: {toggleMode: function () {this.verbose = !this.verbose;}}});
+
+    ion.sound({sounds: [{name: "kick"}], path: "./static/sound/", preload: true, multiplay: true});
 
     function Ws() {
         let instance = this;
@@ -119,7 +122,7 @@ img.img {
 
         instance.fire = () => {
             if (soundMode.verbose === true) {
-                console.log("played sound")
+                ion.sound.play("kick");
             }
             if (soundMode.verbose === true && ("vibrate" in window.navigator) === true) {
                 window.navigator.vibrate(100);
