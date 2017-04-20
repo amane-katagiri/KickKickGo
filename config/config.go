@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"flag"
+	"log"
 	"io/ioutil"
 )
 
@@ -57,9 +58,17 @@ func loadDefaultConfig() *Config {
 func loadFile(filename string) ([]byte, error) {
 	if filename != "" {
 		return ioutil.ReadFile(filename)
-	} else {
-		return ioutil.ReadFile("config.json")
 	}
+	b, err := ioutil.ReadFile("config/config.json")
+	if err == nil {
+		return b, err
+	}
+	b, err = ioutil.ReadFile("config.json")
+	if err == nil {
+		log.Println("default config file path is `config/config.json` from v0.4")
+		return b, err
+	}
+	return nil, err
 }
 
 func LoadFlag() {

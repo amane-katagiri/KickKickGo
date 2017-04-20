@@ -42,9 +42,17 @@ func loadDefaultConfig() *Config {
 func loadFile(filename string) ([]byte, error) {
 	if filename != "" {
 		return ioutil.ReadFile(filename)
-	} else {
-		return ioutil.ReadFile("redis.json")
 	}
+	b, err := ioutil.ReadFile("config/redis.json")
+	if err == nil {
+		return b, err
+	}
+	b, err = ioutil.ReadFile("redis.json")
+	if err == nil {
+		log.Println("default redis config file path is `config/redis.json` from v0.4")
+		return b, err
+	}
+	return nil, err
 }
 
 func LoadFlag() {
