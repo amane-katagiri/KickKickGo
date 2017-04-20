@@ -36,6 +36,10 @@ install:
 clean:
 	rm -rf bin/*
 
+.PHONY: lint
+lint:
+	 find . -type d -name "vendor" -prune -o -type f -name "*.go" -print | xargs -IXXX golint XXX
+
 .PHONY: docker-build
 docker-build:
 	docker build -t $(DOCKER_IMAGE) .
