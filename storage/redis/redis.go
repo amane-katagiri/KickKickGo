@@ -11,6 +11,7 @@ import (
 	redigo "github.com/garyburd/redigo/redis"
 )
 
+// Config is for redis
 type Config struct {
 	Address     string
 	Key         string
@@ -20,7 +21,8 @@ type Config struct {
 
 var config *Config
 
-type Flag struct {
+// Flag has flag parameters for redis
+type flagParam struct {
 	ConfigFile  string
 	Address     string
 	Key         string
@@ -28,7 +30,7 @@ type Flag struct {
 	IdleTimeOut int
 }
 
-var f Flag
+var f flagParam
 
 func loadDefaultConfig() *Config {
 	return &Config{
@@ -55,6 +57,7 @@ func loadFile(filename string) ([]byte, error) {
 	return nil, err
 }
 
+// LoadFlag add flag parameters (call from storage.LoadFlag)
 func LoadFlag() {
 	flag.StringVar(&f.ConfigFile, "redis.config", "", "config file in JSON format")
 	flag.StringVar(&f.Address, "redis.address", "", "redis server addr 'host:port'")
@@ -63,41 +66,41 @@ func LoadFlag() {
 	flag.IntVar(&f.IdleTimeOut, "redis.idletimeout", -1, "redis.Pool.IdleTimeout (in sec)")
 }
 
+// LoadConfig load config (call from LoadConfig)
 func LoadConfig() error {
 	config = loadDefaultConfig()
-	{
-		j, err := loadFile(f.ConfigFile)
-		if err != nil && f.ConfigFile != "" {
-			return err
-		} else {
-			json.Unmarshal(j, &config)
-		}
+	j, err := loadFile(f.ConfigFile)
+	if err != nil && f.ConfigFile != "" {
+		return err
 	}
+	json.Unmarshal(j, &config)
 	config.update()
 	return nil
 }
 
-func (self *Config) update() {
+func (config *Config) update() {
 	if f.Address != "" {
-		self.Address = f.Address
+		config.Address = f.Address
 	}
 	if f.Key != "" {
-		self.Key = f.Key
+		config.Key = f.Key
 	}
 	if f.MaxIdle != -1 {
-		self.MaxIdle = f.MaxIdle
+		config.MaxIdle = f.MaxIdle
 	}
 	if f.IdleTimeOut != -1 {
-		self.IdleTimeOut = f.IdleTimeOut
+		config.IdleTimeOut = f.IdleTimeOut
 	}
 }
 
-type RedisStorage struct {
+// Storage save count to redis
+type Storage struct {
 	key  string
 	pool redigo.Pool
 }
 
-func (s RedisStorage) GetCount() int {
+// GetCount request count from redis
+func (s Storage) GetCount() int {
 	conn := s.pool.Get()
 	defer conn.Close()
 	i, err := redigo.Int(conn.Do("GET", s.key))
@@ -107,7 +110,9 @@ func (s RedisStorage) GetCount() int {
 	}
 	return i
 }
-func (s RedisStorage) SetCount(i int) {
+
+// SetCount store count to redis
+func (s Storage) SetCount(i int) {
 	conn := s.pool.Get()
 	defer conn.Close()
 	_, err := conn.Do("SET", s.key, i)
@@ -116,9 +121,10 @@ func (s RedisStorage) SetCount(i int) {
 	}
 }
 
-func NewRedisStorage() (*RedisStorage, error) {
+// NewStorage return new Storage object from config
+func NewStorage() (*Storage, error) {
 	if config.Address != "" {
-		return &RedisStorage{
+		return &Storage{
 			key: config.Key,
 			pool: redigo.Pool{
 				MaxIdle:     config.MaxIdle,
@@ -126,7 +132,6 @@ func NewRedisStorage() (*RedisStorage, error) {
 				Dial:        func() (redigo.Conn, error) { return redigo.Dial("tcp", config.Address) },
 			},
 		}, nil
-	} else {
-		return nil, errors.New("`Address` for RedisStorage is not specified.")
 	}
+	return nil, errors.New("`Address` for RedisStorage is not specified")
 }

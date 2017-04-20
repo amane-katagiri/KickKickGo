@@ -1,15 +1,20 @@
 package null
 
-type NullStorage struct {
+// Storage do nothing (count will be only in memory)
+type Storage struct {
 }
 
-func (s NullStorage) GetCount() int {
+// GetCount return count as 0
+func (s Storage) GetCount() int {
 	return 0
 }
-func (s NullStorage) SetCount(i int) {
+
+// SetCount do nothing
+func (s Storage) SetCount(i int) {
 	return
 }
 
-func NewNullStorage() (*NullStorage, error) {
-	return &NullStorage{}, nil
+// NewStorage return new default Storage object
+func NewStorage() (*Storage, error) {
+	return &Storage{}, nil
 }

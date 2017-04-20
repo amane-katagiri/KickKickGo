@@ -10,6 +10,8 @@ import (
 	ws "github.com/gorilla/websocket"
 )
 
+// Message is format to send information
+// Server send Message and client send "ping"
 type Message struct {
 	Message string `json:"message"`
 	Count   int    `json:"count"`
@@ -18,6 +20,7 @@ type Message struct {
 
 var origin = ""
 
+// SetOrigin set websocket origin "/scheme://host(:port)/" or "" (will not check)
 func SetOrigin(org string) {
 	origin = org
 }
@@ -36,39 +39,41 @@ var upgrader = ws.Upgrader{
 	},
 }
 
-var add_count = make(chan int)
-var get_count = make(chan int)
-var add_clients = make(chan int)
-var get_clients = make(chan int)
+var addCount = make(chan int)
+var getCount = make(chan int)
+var addClients = make(chan int)
+var getClients = make(chan int)
 var seq = make(chan int)
 
 var socks = map[int]*ws.Conn{}
 var socksLock = new(sync.RWMutex)
 
-// TODO: limit call setter frequency
+// ServeCount increment pushed count
 func ServeCount(i int, setter func(int)) {
 	for {
 		select {
-		case get_count <- i:
-		case c := <-add_count:
+		case getCount <- i:
+		case c := <-addCount:
 			i += c
 			go setter(i)
 		}
 	}
 }
 
+// ServeClients increment/decrement websocket client count
 func ServeClients() {
 	i := 0
 	for {
 		select {
-		case get_clients <- i:
-		case c := <-add_clients:
+		case getClients <- i:
+		case c := <-addClients:
 			i += c
 		}
 	}
 }
 
-func ServeId() {
+// ServeID return new websocket client id
+func ServeID() {
 	i := 0
 	for {
 		seq <- i
@@ -77,7 +82,7 @@ func ServeId() {
 }
 
 func send(conn *ws.Conn, message string) error {
-	data, _ := json.Marshal(Message{Message: message, Count: <-get_count, Clients: <-get_clients})
+	data, _ := json.Marshal(Message{Message: message, Count: <-getCount, Clients: <-getClients})
 	err := conn.WriteMessage(ws.TextMessage, data)
 	return err
 }
@@ -123,6 +128,7 @@ func ping(id int) error {
 	return sendAll(id, "ping", "pong")
 }
 
+// WsHandler serve websocket
 func WsHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -132,11 +138,11 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := <-seq
 	defer pole(id)
-	defer func() { add_clients <- -1 }()
+	defer func() { addClients <- -1 }()
 	defer delSocket(id)
 	defer conn.Close()
 
-	add_clients <- 1
+	addClients <- 1
 	addSocket(conn, id)
 
 	err = pole(id)
@@ -150,7 +156,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			break
 		}
-		add_count <- 1
+		addCount <- 1
 		err = ping(id)
 		if err != nil {
 			log.Println(err)

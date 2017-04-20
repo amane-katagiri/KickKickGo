@@ -7,13 +7,14 @@ import (
 	"io/ioutil"
 )
 
+// Config is for kick-kick-go
 type Config struct {
-	Server        Server   `json:"server"`
+	Server        server   `json:"server"`
 	StaticDir     string   `json:"static_dir"`
 	TemplateFiles []string `json:"template_files"`
-	WsUrl         WsUrl    `json:"ws_url"`
+	WsURL         wsURL    `json:"ws_url"`
 }
-type Server struct {
+type server struct {
 	Key	        string `json:"key"`
 	Cert        string `json:"cert"`
 	Host        string `json:"host"`
@@ -22,27 +23,27 @@ type Server struct {
 	WsPath      string `json:"ws_path"`
 }
 
-type Flag struct {
+type flagParam struct {
 	ConfigFile  string
 	Key         string
 	Cert        string
 	Host        string
 	Port        int
 	CheckOrigin bool
-	WsUrl       WsUrl
+	WsURL       wsURL
 }
-type WsUrl struct {
+type wsURL struct {
 	Ssl  bool   `json:"ssl"`
 	Host string `json:"host"`
 	Port int    `json:"port"`
 	Path string `json:"path"`
 }
 
-var f Flag
+var f flagParam
 
 func loadDefaultConfig() *Config {
 	return &Config{
-		Server: Server{
+		Server: server{
 			Key: "", Cert: "",
 			Host: "localhost",
 			Port: 8000,
@@ -51,7 +52,7 @@ func loadDefaultConfig() *Config {
 		},
 		StaticDir:     "static",
 		TemplateFiles: []string{"templates/index.tmpl"},
-		WsUrl:         WsUrl{Ssl: false, Host: "", Port: -1, Path: ""},
+		WsURL:         wsURL{Ssl: false, Host: "", Port: -1, Path: ""},
 	}
 }
 
@@ -71,6 +72,7 @@ func loadFile(filename string) ([]byte, error) {
 	return nil, err
 }
 
+// LoadFlag add flag parameters (call after other LoadFlag functions)
 func LoadFlag() {
 	flag.StringVar(&f.ConfigFile, "config", "", "config file in JSON format")
 	flag.StringVar(&f.Key, "key", "", "server key")
@@ -78,64 +80,64 @@ func LoadFlag() {
 	flag.StringVar(&f.Host, "host", "", "hostname")
 	flag.BoolVar(&f.CheckOrigin, "checkorigin", false, "check origin for websocket")
 	flag.IntVar(&f.Port, "port", -1, "port number")
-	flag.BoolVar(&f.WsUrl.Ssl, "wsurl.ssl", false, "set ssl in `WsUrl` (template variable)")
-	flag.StringVar(&f.WsUrl.Host, "wsurl.host", "", "set hostname in `WsUrl` (template variable)")
-	flag.IntVar(&f.WsUrl.Port, "wsurl.port", -1, "set port in `WsUrl` (template variable)")
-	flag.StringVar(&f.WsUrl.Path, "wsurl.path", "", "set path (starts with /) in `WsUrl` (template variable)")
+	flag.BoolVar(&f.WsURL.Ssl, "wsurl.ssl", false, "set ssl in `WsURL` (template variable)")
+	flag.StringVar(&f.WsURL.Host, "wsurl.host", "", "set hostname in `WsURL` (template variable)")
+	flag.IntVar(&f.WsURL.Port, "wsurl.port", -1, "set port in `WsURL` (template variable)")
+	flag.StringVar(&f.WsURL.Path, "wsurl.path", "", "set path (starts with /) in `WsURL` (template variable)")
 
 	flag.Parse()
 }
 
+// LoadConfig load config (call after LoadFlag)
 func LoadConfig() (*Config, error) {
 	config := loadDefaultConfig()
 	{
 		j, err := loadFile(f.ConfigFile)
 		if err != nil && f.ConfigFile != "" {
 			return nil, err
-		} else {
-			json.Unmarshal(j, &config)
 		}
+		json.Unmarshal(j, &config)
 	}
 	config.update()
 	return config, nil
 }
 
-func (self *Config) update() {
+func (config *Config) update() {
 	if f.Key != "" {
-		self.Server.Key = f.Key
+		config.Server.Key = f.Key
 	}
 	if f.Cert != "" {
-		self.Server.Cert = f.Cert
+		config.Server.Cert = f.Cert
 	}
 	if f.Host != "" {
-		self.Server.Host = f.Host
+		config.Server.Host = f.Host
 	}
 	if f.Port != -1 {
-		self.Server.Port = f.Port
+		config.Server.Port = f.Port
 	}
 	if f.CheckOrigin == true {
-		self.Server.CheckOrigin = f.CheckOrigin
+		config.Server.CheckOrigin = f.CheckOrigin
 	}
 
-	if f.WsUrl.Ssl == true || self.Server.Key != "" {
-		self.WsUrl.Ssl = true
+	if f.WsURL.Ssl == true || config.Server.Key != "" {
+		config.WsURL.Ssl = true
 	}
 
-	if f.WsUrl.Host != "" {
-		self.WsUrl.Host = f.WsUrl.Host
-	} else if self.WsUrl.Host == "" {
-		self.WsUrl.Host = self.Server.Host
+	if f.WsURL.Host != "" {
+		config.WsURL.Host = f.WsURL.Host
+	} else if config.WsURL.Host == "" {
+		config.WsURL.Host = config.Server.Host
 	}
 
-	if f.WsUrl.Port != -1 {
-		self.WsUrl.Port = f.WsUrl.Port
-	} else if self.WsUrl.Port == -1 {
-		self.WsUrl.Port = self.Server.Port
+	if f.WsURL.Port != -1 {
+		config.WsURL.Port = f.WsURL.Port
+	} else if config.WsURL.Port == -1 {
+		config.WsURL.Port = config.Server.Port
 	}
 
-	if f.WsUrl.Path != "" {
-		self.WsUrl.Path = f.WsUrl.Path
-	} else if self.WsUrl.Path == "" {
-		self.WsUrl.Path = self.Server.WsPath
+	if f.WsURL.Path != "" {
+		config.WsURL.Path = f.WsURL.Path
+	} else if config.WsURL.Path == "" {
+		config.WsURL.Path = config.Server.WsPath
 	}
 }
