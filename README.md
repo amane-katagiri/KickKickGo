@@ -41,13 +41,9 @@ docker run --rm amane/kick-kick-go -h
 
 ### Run with proxy
 
-If you want to use different scheme(use tls or not), host, port or path, set `ws_url` on config.json or use `-wsurl.*`. explicit `ws_url` parameters overwrites Origin.
+If you want to use different websocket url, set `ws_url` on config.json or use `-wsurl`.
 
-Example: You can use websocket url `ws://localhost.amane.moe:9999/dev/chair` as templates variable when using the following `config.json`.
-
-* The Origin will be `http://localhost.amane.moe:9999` if `server.check_origin` is `true`.
-
-* You must pass `/dev/chair` to `/ws` in proxy.
+Example: You can use websocket url `ws://localhost.amane.moe:9999/dev/chair` as templates variable when using the following `config.json`. `Origin` header will be expected `http://localhost.amane.moe:9999` if `server.check_origin` is `true`.
 
 ```
 {
@@ -57,16 +53,10 @@ Example: You can use websocket url `ws://localhost.amane.moe:9999/dev/chair` as 
         "host": "localhost",
         "port": 8000,
         "check_origin": false,
-        "ws_path": "/ws"
+        "ws_path": "ws://localhost.amane.moe:9999/dev/chair"
     },
     "static_dir": "static",
-    "template_files": ["templates/index.tmpl"],
-    "ws_url": {
-        "ssl": false,
-        "host": "localhost.amane.moe",
-        "port": 9999,
-        "path": "/dev/chair"
-    }
+    "template_files": ["templates/index.tmpl"]
 }
 ```
 
