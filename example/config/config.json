@@ -5,14 +5,8 @@
         "host": "localhost",
         "port": 8000,
         "check_origin": false,
-        "ws_path": "/ws"
+        "ws_url": "ws://localhost:8000/ws"
     },
     "static_dir": "static",
-    "template_files": ["templates/index.tmpl"],
-    "ws_url": {
-        "ssl": false,
-        "host": "",
-        "port": -1,
-        "path": ""
-    }
+    "template_files": ["templates/index.tmpl"]
 }
