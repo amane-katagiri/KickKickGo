@@ -12,7 +12,7 @@ type Config struct {
 	Server        server   `json:"server"`
 	StaticDir     string   `json:"static_dir"`
 	TemplateFiles []string `json:"template_files"`
-	WsURL         wsURL    `json:"ws_url"`
+	WsURL        wsURL    `json:"ws_url"` // WsURL is ignored from v0.5
 }
 type server struct {
 	Key	        string `json:"key"`
@@ -20,7 +20,8 @@ type server struct {
 	Host        string `json:"host"`
 	Port        int    `json:"port"`
 	CheckOrigin bool   `json:"check_origin"`
-	WsPath      string `json:"ws_path"`
+	WsURL       string `json:"ws_url"`
+	WsPath     string `json:"ws_path"` // WsPath is ignored from v0.5
 }
 
 type flagParam struct {
@@ -30,7 +31,8 @@ type flagParam struct {
 	Host        string
 	Port        int
 	CheckOrigin bool
-	WsURL       wsURL
+	WsURL       string
+	_WsURL      wsURL // -wsurl is replaced from v0.5
 }
 type wsURL struct {
 	Ssl  bool   `json:"ssl"`
@@ -48,7 +50,8 @@ func loadDefaultConfig() *Config {
 			Host: "localhost",
 			Port: 8000,
 			CheckOrigin: false,
-			WsPath: "/ws",
+			WsURL: "ws://localhost:8000/ws",
+			WsPath: "",
 		},
 		StaticDir:     "static",
 		TemplateFiles: []string{"templates/index.tmpl"},
@@ -78,12 +81,14 @@ func LoadFlag() {
 	flag.StringVar(&f.Key, "key", "", "server key")
 	flag.StringVar(&f.Cert, "cert", "", "server cert")
 	flag.StringVar(&f.Host, "host", "", "hostname")
-	flag.BoolVar(&f.CheckOrigin, "checkorigin", false, "check origin for websocket")
 	flag.IntVar(&f.Port, "port", -1, "port number")
-	flag.BoolVar(&f.WsURL.Ssl, "wsurl.ssl", false, "set ssl in `WsURL` (template variable)")
-	flag.StringVar(&f.WsURL.Host, "wsurl.host", "", "set hostname in `WsURL` (template variable)")
-	flag.IntVar(&f.WsURL.Port, "wsurl.port", -1, "set port in `WsURL` (template variable)")
-	flag.StringVar(&f.WsURL.Path, "wsurl.path", "", "set path (starts with /) in `WsURL` (template variable)")
+	flag.StringVar(&f.WsURL, "wsurl", "", "websocket url")
+	flag.BoolVar(&f.CheckOrigin, "checkorigin", false, "check origin for websocket")
+
+	flag.BoolVar(&f._WsURL.Ssl, "wsurl.ssl", false, "(is ignored)")
+	flag.StringVar(&f._WsURL.Host, "wsurl.host", "", "(is ignored)")
+	flag.IntVar(&f._WsURL.Port, "wsurl.port", -1, "(is ignored)")
+	flag.StringVar(&f._WsURL.Path, "wsurl.path", "", "(is ignored)")
 
 	flag.Parse()
 }
@@ -97,6 +102,9 @@ func LoadConfig() (*Config, error) {
 			return nil, err
 		}
 		json.Unmarshal(j, &config)
+		if config.Server.WsPath != "" || config.WsURL.Ssl == true || config.WsURL.Host != "" || config.WsURL.Port != -1 || config.WsURL.Path != "" {
+			log.Println("`ws_url` and `server.ws_path` are ignored from v0.5. Use `server.ws_url` instead.")
+		}
 	}
 	config.update()
 	return config, nil
@@ -118,26 +126,11 @@ func (config *Config) update() {
 	if f.CheckOrigin == true {
 		config.Server.CheckOrigin = f.CheckOrigin
 	}
-
-	if f.WsURL.Ssl == true || config.Server.Key != "" {
-		config.WsURL.Ssl = true
+	if f.WsURL != "" {
+		config.Server.WsURL = f.WsURL
 	}
 
-	if f.WsURL.Host != "" {
-		config.WsURL.Host = f.WsURL.Host
-	} else if config.WsURL.Host == "" {
-		config.WsURL.Host = config.Server.Host
-	}
-
-	if f.WsURL.Port != -1 {
-		config.WsURL.Port = f.WsURL.Port
-	} else if config.WsURL.Port == -1 {
-		config.WsURL.Port = config.Server.Port
-	}
-
-	if f.WsURL.Path != "" {
-		config.WsURL.Path = f.WsURL.Path
-	} else if config.WsURL.Path == "" {
-		config.WsURL.Path = config.Server.WsPath
+	if f._WsURL.Ssl == true || f._WsURL.Host != "" || f._WsURL.Port != -1 || f._WsURL.Path != "" {
+		log.Println("`-wsurl.*` is ignored from v0.5. Use `-wsurl` instead.")
 	}
 }

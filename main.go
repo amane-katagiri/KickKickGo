@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/amane-katagiri/kick-kick-go/config"
 	"github.com/amane-katagiri/kick-kick-go/storage"
@@ -14,7 +15,6 @@ import (
 )
 
 var wsURL = "wss?://host:port/path/to/ws"
-var origin = "https?://host/path:port"
 var secure = ""
 var tmpl *template.Template
 
@@ -33,20 +33,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defaultPort := 80
-	if config.WsURL.Ssl {
-		secure = "s"
-		defaultPort = 443
+	wsurl, err := url.Parse(config.Server.WsURL)
+	if err != nil {
+		panic(err)
 	}
-	if config.WsURL.Port != defaultPort {
-		wsURL = fmt.Sprintf("ws%s://%s:%d%s", secure, config.WsURL.Host, config.WsURL.Port, config.WsURL.Path)
-		origin = fmt.Sprintf("http%s://%s:%d", secure, config.WsURL.Host, config.WsURL.Port)
-	} else {
-		wsURL = fmt.Sprintf("ws%s://%s%s", secure, config.WsURL.Host, config.WsURL.Path)
-		origin = fmt.Sprintf("http%s://%s", secure, config.WsURL.Host,)
+	wsURL = config.Server.WsURL
+	if wsurl.Scheme == "wss" {
+		secure = "s"
 	}
 	if config.Server.CheckOrigin {
-		websocket.SetOrigin(origin)
+		websocket.SetOrigin(fmt.Sprintf("http%s://%s", secure, wsurl.Host))
 	}
 	tmpl, err = template.New("").ParseFiles(config.TemplateFiles...)
 	if err != nil {
@@ -55,7 +51,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc(config.Server.WsPath, websocket.WsHandler)
+	http.HandleFunc(wsurl.Path, websocket.WsHandler)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(config.StaticDir))))
 
 	var s storage.Storage
