@@ -1,5 +1,7 @@
 package null
 
+import "log"
+
 // Storage do nothing (count will be only in memory)
 type Storage struct {
 }
@@ -11,6 +13,7 @@ func (s Storage) GetCount() int {
 
 // SetCount do nothing
 func (s Storage) SetCount(i int) {
+	log.Printf("count: %d", i)
 	return
 }
 
