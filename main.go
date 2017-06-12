@@ -60,9 +60,7 @@ func main() {
 		log.Println(err)
 		s, err = null.NewStorage()
 	}
-	go websocket.ServeCount(s.GetCount(), s.SetCount)
-	go websocket.ServeClients()
-	go websocket.ServeID()
+	go websocket.ServeCounts(s.GetCount, s.SetCount)
 
 	if config.Server.Key != "" {
 		log.Printf("Serving at https://%s:%d", config.Server.Host, config.Server.Port)
