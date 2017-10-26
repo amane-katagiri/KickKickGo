@@ -1,5 +1,5 @@
 NAME := kick-kick-go
-VERSION := v0.2
+VERSION := v0.6
 REVISION := $(shell git rev-parse --short HEAD)
 
 SRCS := $(shell find . -type f -name '*.go')
